@@ -1,12 +1,16 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { FaGithub } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Header from "@/components/Header";
+import { FaCode } from "react-icons/fa";
+
+import CodeHighlighter from "@/components/CodeHighlighter";
+import Editor, { DiffEditor, useMonaco, loader } from "@monaco-editor/react";
 import {
   Tooltip,
   TooltipContent,
@@ -39,13 +43,13 @@ import {
   Save,
 } from "lucide-react";
 import Link from "next/link";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { tomorrow } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 type CodeSnippet = {
   language: string;
   code: string;
   description: string;
+  highlightedLines?: number[];
+  documentation?: string;
 };
 
 type Message = {
@@ -60,6 +64,104 @@ const suggestedQueries = [
   "What's the difference between let and const?",
   "Show me how to use map in Python",
 ];
+
+const assistantMessage: Message = {
+  type: "assistant",
+  content:
+    'Here are some code snippets for a simple "Hello, World!" program in different languages:',
+  codeSnippets: [
+    {
+      language: "cpp",
+      highlightedLines: [5, 6, 7, 8, 9, 10, 11, 12],
+      code: `#include <bits/stdc++.h>
+      using namespace std;
+      
+      int search(int arr[], int N, int x)
+      {
+          for (int i = 0; i < N; i++)
+              if (arr[i] == x)
+                  return i;
+          return -1;
+      }
+      
+      // Driver code
+      int main(void)
+      {
+          int arr[] = { 2, 3, 4, 10, 40 };
+          int x = 10;
+          int N = sizeof(arr) / sizeof(arr[0]);
+      
+          // Function call
+          int result = search(arr, N, x);
+          (result == -1)
+              ? cout << "Element is not present in array"
+              : cout << "Element is present at index " << result;
+          return 0;
+      }
+      `,
+      description: "Long but low level code",
+    },
+    {
+      language: "python",
+      description: "Simple but Interpreted output",
+      highlightedLines: [5, 6, 7, 8, 9, 10, 11, 12],
+      code: `# Python3 code to linearly search x in arr[].
+
+
+def search(arr, N, x):
+
+for i in range(0, N):
+  if (arr[i] == x):
+      return i
+return -1
+
+
+# Driver Code
+if __name__ == "__main__":
+arr = [2, 3, 4, 10, 40]
+x = 10
+N = len(arr)
+
+# Function call
+result = search(arr, N, x)
+if(result == -1):
+  print("Element is not present in array")
+else:
+  print("Element is present at index", result)
+`,
+    },
+    {
+      language: "javascript",
+      highlightedLines: [5, 6, 7, 8, 9, 10, 11, 12],
+      code: `
+      // Javascript code to linearly search x in arr[].
+
+function search(arr, n, x)
+{
+for (let i = 0; i < n; i++)
+  if (arr[i] == x)
+      return i;
+return -1;
+}
+
+// Driver code
+
+let arr = [ 2, 3, 4, 10, 40 ];
+let x = 10;
+let n = arr.length;
+
+// Function call
+let result = search(arr, n, x);
+(result == -1)
+  ? console.log("Element is not present in array")
+  : console.log("Element is present at index " + result);
+
+// This code is contributed by Manoj
+`,
+      description: "A complete JavaScript for linear search",
+    },
+  ],
+};
 
 export default function EnhancedUserDashboard() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -88,119 +190,14 @@ export default function EnhancedUserDashboard() {
 
     // Simulating API call
     setTimeout(() => {
-      const assistantMessage: Message = {
-        type: "assistant",
-        content:
-          'Here are some code snippets for a simple "Hello, World!" program in different languages:',
-        codeSnippets: [
-          {
-            language: "C++",
-            code: `#include <bits/stdc++.h>
-            using namespace std;
-            
-            int search(int arr[], int N, int x)
-            {
-                for (int i = 0; i < N; i++)
-                    if (arr[i] == x)
-                        return i;
-                return -1;
-            }
-            
-            // Driver code
-            int main(void)
-            {
-                int arr[] = { 2, 3, 4, 10, 40 };
-                int x = 10;
-                int N = sizeof(arr) / sizeof(arr[0]);
-            
-                // Function call
-                int result = search(arr, N, x);
-                (result == -1)
-                    ? cout << "Element is not present in array"
-                    : cout << "Element is present at index " << result;
-                return 0;
-            }
-            `,
-            description: "Long but low level code",
-          },
-          {
-            language: "Python",
-            description: "Simple but Interpreted output",
-            code: `# Python3 code to linearly search x in arr[].
-
-
-def search(arr, N, x):
-
-    for i in range(0, N):
-        if (arr[i] == x):
-            return i
-    return -1
-
-
-# Driver Code
-if __name__ == "__main__":
-    arr = [2, 3, 4, 10, 40]
-    x = 10
-    N = len(arr)
-
-    # Function call
-    result = search(arr, N, x)
-    if(result == -1):
-        print("Element is not present in array")
-    else:
-        print("Element is present at index", result)
-`,
-          },
-          {
-            language: "javascript",
-            code: `
-            // Javascript code to linearly search x in arr[].
-
-function search(arr, n, x)
-{
-    for (let i = 0; i < n; i++)
-        if (arr[i] == x)
-            return i;
-    return -1;
-}
-
-// Driver code
-
-    let arr = [ 2, 3, 4, 10, 40 ];
-    let x = 10;
-    let n = arr.length;
-
-    // Function call
-    let result = search(arr, n, x);
-    (result == -1)
-        ? console.log("Element is not present in array")
-        : console.log("Element is present at index " + result);
-
-// This code is contributed by Manoj
-`,
-            description: "A complete JavaScript for linear search",
-          },
-        ],
-      };
       setMessages((prev) => [...prev, assistantMessage]);
       setLoading(false);
     }, 2000);
   };
 
-  const copyToClipboard = (code: string) => {
-    navigator.clipboard.writeText(code);
-  };
-
-
-
   const clearChat = () => {
     setMessages([]);
     setSelectedSnippet(null);
-  };
-
-  const saveSnippet = (snippet: CodeSnippet) => {
-    console.log("Saving snippet:", snippet);
-    alert("Snippet saved successfully!");
   };
 
   return (
@@ -231,12 +228,10 @@ function search(arr, n, x)
         }
       `}</style>
 
-<Sidebar focus='codeassist' />
+      <Sidebar focus="codeassist" />
 
- 
       <div className="flex-1 flex flex-col overflow-hidden bg-gray-50 dark:bg-gray-900">
-
-<Header />
+        <Header />
 
         {/* Chat Interface */}
         <div className="flex-1 overflow-hidden flex">
@@ -250,7 +245,7 @@ function search(arr, n, x)
                   <CardTitle>Suggested Queries</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     {suggestedQueries.map((query, index) => (
                       <Button
                         key={index}
@@ -284,32 +279,37 @@ function search(arr, n, x)
                     {message.codeSnippets && (
                       <div className="mt-4 space-y-4">
                         {message.codeSnippets.map((snippet, snippetIndex) => (
+                          
                           <Card key={snippetIndex} className="bg-muted">
-                            <CardHeader className="p-3">
-                              <CardTitle className="text-sm">
-                                {snippet.description}
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-3 pt-0">
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => setSelectedSnippet(snippet)}
-                                className="w-full mb-2"
-                              >
-                                View {snippet.language} code
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => saveSnippet(snippet)}
-                                className="w-full"
-                              >
-                                <Save className="h-4 w-4 mr-2" />
-                                Save Snippet
-                              </Button>
-                            </CardContent>
-                          </Card>
+  <CardHeader className="p-3 d-flex justify-content-between">
+    <div className="col-lg-4">
+      <p>{snippet.description}</p>
+    </div>
+    <div className="col-lg-1">
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={() => setSelectedSnippet(snippet)}
+        className="bg-border"
+      >
+        <FaCode />
+      </Button>
+
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={() => setSelectedSnippet(snippet)}
+        className="bg-border mx-2"
+      >
+        <FaGithub />
+      </Button>
+
+
+
+    </div>
+  </CardHeader>
+</Card>
+
                         ))}
                       </div>
                     )}
@@ -361,26 +361,16 @@ function search(arr, n, x)
                       </TabsTrigger>
                     </TabsList>
                     <TabsContent value="code" className="p-4">
-                      <div className="relative">
-                        <SyntaxHighlighter
-                          language={selectedSnippet.language}
-                          style={tomorrow}
-                        >
-                          {selectedSnippet.code}
-                        </SyntaxHighlighter>
-                        <Button
-                          variant="secondary"
-                          size="icon"
-                          className="absolute top-2 right-2"
-                          onClick={() => copyToClipboard(selectedSnippet.code)}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      <CodeHighlighter
+                        title="Code"
+                        language={selectedSnippet.language}
+                        code={selectedSnippet.code}
+                        highlightedLines={selectedSnippet.highlightedLines}
+                      />
                     </TabsContent>
                     <TabsContent value="documentation" className="p-4">
                       <p>
-                        Documentation for {selectedSnippet.language} would be
+                        Documentation for given function in {selectedSnippet.language} would be
                         displayed here.
                       </p>
                     </TabsContent>
@@ -425,7 +415,6 @@ function search(arr, n, x)
             </TooltipProvider>
           </form>
         </div>
-
       </div>
     </div>
   );
