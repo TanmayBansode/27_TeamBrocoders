@@ -6,6 +6,13 @@
 .pnp.js
 .yarn/install-state.gz
 
+# ah some stuff
+/flask_backend/repositories
+/flask_backend/vector_store
+*/__pycache__
+*.pyc
+
+
 # testing
 /coverage
 
