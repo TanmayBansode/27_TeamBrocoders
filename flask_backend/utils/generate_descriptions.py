@@ -1,20 +1,7 @@
-from langchain_ollama import ChatOllama
-
-from utils import read_files
-def generate_code_descriptions():
-  file_content = read_files("repositories")
-  llm = ChatOllama(
-      model = "gemma2:2b",
-      temperature = 0.8,
-      num_predict = 256,
-  )
-
+def generate_descriptions(files_content, llm):
   descriptions = {}
-
-  # get first 5 files
-  file_content = dict(list(file_content.items())[:5])
-
-  for filename, content in file_content.items():
+  total = len(files_content)
+  for index, (filename, content) in enumerate(files_content.items()):
       file = """"""
       for line in content:
         file += line + "\n"
@@ -25,3 +12,5 @@ def generate_code_descriptions():
       ]
       response = llm.invoke(messages)
       descriptions[filename] = response.content
+  
+  return descriptions
