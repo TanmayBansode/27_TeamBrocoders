@@ -116,7 +116,6 @@ def search_file():
     results = retrieve_files(query, vector_store, k)
     if len(results) == 0:
         return jsonify({"error": "No results found"})
-
     response = []
     for result in results:
         response.append(result["metadata"]["file_path"].replace("\\", "/")[13:])

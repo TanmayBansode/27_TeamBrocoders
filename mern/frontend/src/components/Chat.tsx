@@ -46,6 +46,7 @@ const Chat = ({ messages }: { messages: Message[] }) => {
           </div>
         ))
       )}
+
     </div>
   );
 };

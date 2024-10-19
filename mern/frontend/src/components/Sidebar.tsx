@@ -30,7 +30,18 @@ const Sidebar = ({ focus }: { focus: string }) => {
           } rounded-md mx-2`}
         >
           <Code className="w-5 h-5 mr-3" />
-          Code Assistant
+          NLP Search
+        </Link>
+        <Link
+          href="/user/regexsearch"
+          className={`flex items-center px-4 py-2 text-sm font-medium ${
+            focus === "regexsearch"
+              ? "text-white bg-primary"
+              : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+          } rounded-md mx-2`}
+        >
+          <Code className="w-5 h-5 mr-3" />
+          Regex Search
         </Link>
         <Link
           href="/user/projects"
