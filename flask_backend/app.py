@@ -133,7 +133,7 @@ def highlight_code():
     return jsonify({"content": content, "start": start, "end": end})
 
 
-@app.route("/expalin-code", methods=["POST"])
+@app.route("/explain-code", methods=["POST"])
 def explain_code():
     data = request.get_json()
     file_slug = data["file_slug"]
