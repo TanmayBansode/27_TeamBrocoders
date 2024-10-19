@@ -24,8 +24,8 @@ def retrieve_files(query, vector_store, k=1):
     retrieval_grader = retrieval_prompt | llm | JsonOutputParser()
     filtered_response = []
     for result in results:
-        response = retrieval_grader.invoke({"query": query, "snippet": result["content"]})
-        if response.content["score"] == "yes":
+        response = retrieval_grader.invoke({"query": query, "snippet": result.page_content})
+        if response["score"] == "yes":
             filtered_response.append(result)
 
     return filtered_response

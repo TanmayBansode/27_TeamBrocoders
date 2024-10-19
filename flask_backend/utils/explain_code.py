@@ -1,7 +1,5 @@
 from langchain_core.prompts import PromptTemplate
 from langchain_ollama import ChatOllama
-from langchain_core.output_parsers import JsonOutputParser
-
 
 def explain(content):
     llm = ChatOllama(model="gemma2:2b", temperature=0.8, num_predict=512)
@@ -17,6 +15,6 @@ def explain(content):
         input_variables=["snippet"],
     )
 
-    explanation_grader = explanation_prompt | llm | JsonOutputParser()
+    explanation_grader = explanation_prompt | llm
     response = explanation_grader.invoke({"snippet": content})
     return response.content

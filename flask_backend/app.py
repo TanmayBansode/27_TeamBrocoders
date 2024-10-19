@@ -118,7 +118,9 @@ def search_file():
         return jsonify({"error": "No results found"})
     response = []
     for result in results:
-        response.append(result["metadata"]["file_path"].replace("\\", "/")[13:])
+        print("#######################")
+        print(result)
+        response.append(result.metadata["file_path"].replace("\\", "/")[13:])
 
     return jsonify({"results": response})
 
@@ -155,7 +157,7 @@ def get_diff():
 @app.get("/repositories")
 def list_repositories():
     GITHUB_TOKEN = "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"
-    ORG_NAME = "evryfs"
+    ORG_NAME = "sdscoeptest"
     url = f"https://api.github.com/orgs/{ORG_NAME}/repos"
 
     headers = {

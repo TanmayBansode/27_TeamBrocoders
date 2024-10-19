@@ -22,4 +22,4 @@ def highlight(file_slug, query):
     retrieval_grader = highlighter_prompt | llm | JsonOutputParser()
     snippet = read_file(file_slug)
     response = retrieval_grader.invoke({"query": query, "snippet": snippet})
-    return snippet, response.start_line, response.end_line
+    return snippet, response["start_line"], response["end_line"]
