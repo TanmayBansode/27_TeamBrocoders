@@ -13,50 +13,43 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Activity,
-  Badge,
-  ChevronDown,
-  GitBranch,
-  GitCommit,
-  GitFork,
-  Github,
-  GitPullRequest,
-  Home,
-  LayoutDashboard,
-  Search,
-  Settings,
-  Star,
-  Users,
-} from "lucide-react";
+import { Badge, GitBranch, GitCommit, GitFork, Github, Search, Star } from "lucide-react";
 import Link from "next/link";
 import AdminSidebar from "@/components/AdminSidebar";
-import { Checkbox } from "@radix-ui/react-checkbox";
 import { TooltipProvider, TooltipTrigger, TooltipContent } from "@radix-ui/react-tooltip";
 import { Tooltip } from "recharts";
+import { Checkbox } from "@/components/ui/checkbox"; // Replace with your library path
 
-export default function AdminDashboard() {
-  const [selectedRepos, setSelectedRepos] = useState<Set<number>>(new Set()); // State for selected repositories
-  const [searchTerm, setSearchTerm] = useState('');
+export default function AdminRepo() {
+  const [isHovered, setIsHovered] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("");
   const [repositories, setRepositories] = useState<Repository[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedRepos, setSelectedRepos] = useState<Set<number>>(new Set()); // State for selected repositories
   const GITHUB_TOKEN = "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";
   const org = "sdscoeptest"; // Replace with your GitHub organization name
- 
-  // Function to fetch GitHub data
+
   interface Commit {
-    sha: string;            // The SHA of the commit
+    sha: string;
     commit: {
-      message: string;     // The commit message
+      message: string;
     };
-    html_url: string;      // URL to view the commit on GitHub
+    html_url: string;
   }
-  
+
   interface Repository {
-    id: number;               // Unique identifier for the repository
-    name: string;             // Name of the repository
-    description: string;      // Description of the repository
-    commits: Commit[];        // Array of commits related to the repository
+    id: number;
+    name: string;
+    description: string;
+    commits: Commit[];
+    status: string;
   }
+
+  // type RepoCardProps = {
+  //   repo: Repo
+  //   isSelected: boolean
+  //   onSelectRepo: (id: number) => void
+  // }
   
   const statusColors = {
     active: "bg-green-500",
@@ -64,25 +57,41 @@ export default function AdminDashboard() {
     archived: "bg-gray-500"
   }
 
+  const LoadingDots = () => {
+    return (
+      <div className="loading-dots">
+        <span>.</span>
+        <span>.</span>
+        <span>.</span>
+      </div>
+    );
+  };
+
   async function fetchGitHubData(org: string) {
-    const response = await fetch(`https://api.github.com/orgs/${org}/repos`,{headers: {
-      Authorization: `token ${GITHUB_TOKEN}`,
-    },});
+    setLoading(true);
+    const response = await fetch(`https://api.github.com/orgs/${org}/repos`, {
+      headers: {
+        Authorization: `token ${GITHUB_TOKEN}`,
+      },
+    });
     const repos = await response.json();
-    const ans = await fetch('https://api.github.com/repos/sdscoeptest/rustsearch/commits',{headers: {
-      Authorization: `token ${GITHUB_TOKEN}`,
-    },});
-    console.log(ans);
-// Ensure repos is an array
-if (!Array.isArray(repos)) {
-  console.error("Expected repos to be an array", repos);
-  return []; // Return an empty array if not
-}
+
+    if (!Array.isArray(repos)) {
+      console.error("Expected repos to be an array", repos);
+      setLoading(false);
+      return [];
+    }
+
     const reposWithCommits = await Promise.all(
       repos.map(async (repo: Repository) => {
-        const commitsResponse = await fetch(`https://api.github.com/repos/${org}/${repo.name}/commits`,{headers: {
-          Authorization: `token ${GITHUB_TOKEN}`,
-        },});
+        const commitsResponse = await fetch(
+          `https://api.github.com/repos/${org}/${repo.name}/commits`,
+          {
+            headers: {
+              Authorization: `token ${GITHUB_TOKEN}`,
+            },
+          }
+        );
         const commits = await commitsResponse.json();
         return {
           ...repo,
@@ -91,10 +100,10 @@ if (!Array.isArray(repos)) {
       })
     );
 
+    setLoading(false);
     return reposWithCommits;
   }
 
-  // useEffect to fetch data on component mount
   useEffect(() => {
     const getRepositories = async () => {
       const repos = await fetchGitHubData(org);
@@ -103,9 +112,41 @@ if (!Array.isArray(repos)) {
     getRepositories();
   }, [org]);
 
-  const filteredRepositories = repositories.filter(repo =>
+  const filteredRepositories = repositories.filter((repo) =>
     repo.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleSelectRepo = (id: number) => {
+    const newSelectedRepos = new Set(selectedRepos);
+    if (newSelectedRepos.has(id)) {
+      newSelectedRepos.delete(id);
+    } else {
+      newSelectedRepos.add(id);
+    }
+    setSelectedRepos(newSelectedRepos);
+  };
+
+  const handleDeleteSelected = () => {
+    // Logic to delete selected repositories
+    const reposToDelete = Array.from(selectedRepos);
+    // Perform deletion logic (e.g., API call to delete repos)
+    console.log("Deleting repositories with IDs:", reposToDelete);
+    // Reset selection after deletion
+    setSelectedRepos(new Set());
+  };
+
+  const handleOpenSelected = () => {
+    // Logic to open selected repositories
+    const reposToOpen = Array.from(selectedRepos);
+    reposToOpen.forEach((id) => {
+      const repo = repositories.find((repo) => repo.id === id);
+      if (repo) {
+        window.open(repo.html_url, "_blank");
+      }
+    });
+    // Reset selection after opening
+    setSelectedRepos(new Set());
+  };
 
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
@@ -133,23 +174,53 @@ if (!Array.isArray(repos)) {
         .dark ::-webkit-scrollbar-thumb:hover {
           background: #718096;
         }
-      `}</style>
+        .loading-dots {
+          display: inline-block;
+          width: 8px;
+          height: 8px;
+          margin-right: 4px;
+          border-radius: 50%;
+          background-color: #4a5568; /* Color of loading dots */
+          animation: loading 1s infinite ease-in-out;
+        }
 
-      <AdminSidebar focus="dashboard"/>
+        @keyframes loading {
+          0% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.5);
+          }
+          100% {
+            transform: scale(1);
+          }
+        }
+
+        /* Large Checkbox Styles */
+        .custom-checkbox {
+          width: 24px; /* Adjust width */
+          height: 24px; /* Adjust height */
+        }
+      `}</style>
+      <AdminSidebar focus="repository" />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <header className="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center">
-            <span className="text-2xl font-semibold text-gray-800 dark:text-white">Dashboard</span>
+            <span className="text-2xl font-semibold text-gray-800 dark:text-white">
+              Dashboard
+            </span>
           </div>
           <div className="flex items-center">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <Button
+                  variant="ghost"
+                  className="relative h-8 w-8 rounded-full"
+                >
                   <Avatar className="h-8 w-8">
-                    {/* <AvatarImage src="/placeholder-user.jpg" alt="@johndoe" /> */}
                     <AvatarFallback>JD</AvatarFallback>
                   </Avatar>
                 </Button>
@@ -158,7 +229,9 @@ if (!Array.isArray(repos)) {
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">John Doe</p>
-                    <p className="text-xs leading-none text-muted-foreground">john@example.com</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      john@example.com
+                    </p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -177,7 +250,7 @@ if (!Array.isArray(repos)) {
             <div className="relative mb-8">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <Input
-              type="text"
+                type="text"
                 className="pl-10 pr-4 py-2 w-full rounded-full border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent"
                 placeholder="Search repositories, users, or documentation..."
                 value={searchTerm}
@@ -185,58 +258,52 @@ if (!Array.isArray(repos)) {
               />
             </div>
 
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Repositories</CardTitle>
-                  <GitBranch className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{repositories.length}</div>
-                  <p className="text-xs text-muted-foreground">+10% from last month</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">573</div>
-                  <p className="text-xs text-muted-foreground">+2.5% from last week</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Pull Requests</CardTitle>
-                  <GitPullRequest className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">24</div>
-                  <p className="text-xs text-muted-foreground">12 merged, 8 open, 4 closed</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Commits</CardTitle>
-                  <GitCommit className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">1,542</div>
-                  <p className="text-xs text-muted-foreground">-5% from last month</p>
-                </CardContent>
-              </Card>
+            {/* Recent Repositories Header */}
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">
+                All Repositories
+              </h2>
+              <div>
+              <Button
+                  onClick={handleDeleteSelected}
+                  className="bg-green-600 mr-2 text-white"
+                  variant="primary"
+                 
+
+                >
+                  Generate Embeddings
+                </Button>
+
+                <Button
+                  onClick={handleDeleteSelected}
+                  className="mr-2"
+                  variant="destructive"
+
+                >
+                  Delete Embeddings
+                </Button>
+                
+                <Button
+                  onClick={handleDeleteSelected}
+                  disabled={selectedRepos.size === 0}
+                  variant="destructive"
+                >
+                  Delete Selected
+                </Button>
+
+              </div>
             </div>
 
             {/* Recent Repositories */}
             <div className="mb-8">
-              <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">Recent Repositories</h2>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 {filteredRepositories.length > 0 ? (
                   filteredRepositories.map((repo) => (
                     <Card 
-                    className="relative" key={repo.id}
+                    className="relative"
+                    // onMouseEnter={() => setIsHovered(true)}
+                    // onMouseLeave={() => setIsHovered(false)}
+                    key={repo.id}
                   >
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">
@@ -272,7 +339,7 @@ if (!Array.isArray(repos)) {
                       </div>
                       <div className="space-y-2">
                         <h4 className="font-semibold text-sm">Latest Commit:</h4>
-                        {repo.commits[0] && (
+                        {repo.commits[0] ? (
                           <div className="flex items-start space-x-2">
                             <GitCommit className="h-4 w-4 mt-1 flex-shrink-0" />
                             <TooltipProvider>
@@ -293,6 +360,8 @@ if (!Array.isArray(repos)) {
                               </Tooltip>
                             </TooltipProvider>
                           </div>
+                        ): (
+                          <LoadingDots /> // Call the loading component
                         )}
                       </div>
                     </CardContent>
@@ -306,34 +375,10 @@ if (!Array.isArray(repos)) {
               
                   ))
                 ) : (
-                  <p className="text-muted-foreground">No repositories found for this organization.</p>
+                  <p>No repositories found.</p>
                 )}
               </div>
             </div>
-
-            {/* Activity Feed */}
-            <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">Recent Activity</h2>
-            <Card>
-              <CardContent className="p-0">
-                <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {[
-                    { user: "Alice", action: "pushed to", repo: "next-app", time: "2 hours ago" },
-                    { user: "Bob", action: "opened a pull request in", repo: "react-dashboard", time: "4 hours ago" },
-                    { user: "Charlie", action: "commented on", repo: "node-api", time: "1 day ago" },
-                    { user: "David", action: "merged a pull request in", repo: "next-app", time: "2 days ago" },
-                  ].map((activity, index) => (
-                    <li key={index} className="px-4 py-3">
-                      <p className="text-sm">
-                        <span className="font-semibold">{activity.user}</span> {activity.action}{" "}
-                        <span className="font-semibold">{activity.repo}</span>
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{activity.time}</p>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-
           </div>
         </main>
       </div>
