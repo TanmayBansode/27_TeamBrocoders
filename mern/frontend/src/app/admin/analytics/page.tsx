@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { Suspense, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -77,6 +77,7 @@ export default function Projects() {
       <AdminSidebar focus='analytics' />
 
       {/* Make the content scrollable */}
+      <Suspense fallback={<p>Loading...</p>}>
       <div className="flex-1 flex flex-col overflow-hidden bg-gray-50 dark:bg-gray-900">
         <div className="flex-1 p-6 space-y-6 overflow-y-auto">
           <div className="flex justify-between items-center">
@@ -169,6 +170,7 @@ export default function Projects() {
           </div>
         </div>
       </div>
+      </Suspense>
     </div>
   )
 }
