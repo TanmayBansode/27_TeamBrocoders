@@ -5,15 +5,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Eye, EyeOff, Copy, Check } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 interface CodeHighlighterProps {
   code: string
   language: string
   highlightedLines: number[]
   title?: string
+  isRegex?: boolean
 }
 
-const CodeHighlighter: React.FC<CodeHighlighterProps> = ({ code, language, highlightedLines, title }) => {
+const CodeHighlighter: React.FC<CodeHighlighterProps> = ({ code, language, highlightedLines, title, isRegex }) => {
   const [isCodeVisible, setIsCodeVisible] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
 
@@ -21,6 +30,10 @@ const CodeHighlighter: React.FC<CodeHighlighterProps> = ({ code, language, highl
     const style: React.CSSProperties = {}
     if (highlightedLines.includes(lineNumber)) {
       style.backgroundColor = 'rgba(255, 255, 0, 0.2)'
+    } else if (isRegex ) {
+      if(!highlightedLines.some((line) => [lineNumber - 1, lineNumber - 2, lineNumber, lineNumber + 1, lineNumber + 1, ].includes(line))){
+      style.display = 'none'
+    }
     } else if (!isCodeVisible) {
       style.filter = 'blur(4px)'
     }
@@ -72,15 +85,52 @@ const CodeHighlighter: React.FC<CodeHighlighterProps> = ({ code, language, highl
           >
             {code}
           </SyntaxHighlighter>
-          {!isCodeVisible && (
+          {!isCodeVisible && !isRegex && (
             <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 rounded-md">
               <Button onClick={toggleCodeVisibility}>
-              View Complete Code
+                View Complete Code
               </Button>
             </div>
           )}
         </div>
       </CardContent>
+
+      {isRegex && (
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline">Open</Button>
+          </DialogTrigger>
+          <DialogContent className="w-lg">
+            <DialogHeader>
+              <DialogTitle>{title || 'Regex Code Snippet'}</DialogTitle>
+            </DialogHeader>
+            <SyntaxHighlighter
+  language={language}
+  style={atomDark}
+  wrapLines={true}
+  showLineNumbers={true}
+  lineProps={(lineNumber: number) => ({
+    style: {
+      backgroundColor: highlightedLines.includes(lineNumber)
+        ? 'rgba(255, 255, 0, 0.2)'  // Highlighted lines
+        : undefined,
+      filter: !isCodeVisible && !isRegex
+        ? 'blur(4px)'  // Blur the code if hidden and not regex
+        : undefined,
+    }
+  })}
+  customStyle={{
+    margin: 0,
+    borderRadius: '0.5rem',
+    fontSize: '0.875rem',
+  }}
+>
+  {code}
+</SyntaxHighlighter>
+
+          </DialogContent>
+        </Dialog>
+      )}
     </Card>
   )
 }
