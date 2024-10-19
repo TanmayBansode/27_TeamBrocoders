@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react"; // Import useEffect and useState
+import { Suspense, useEffect, useState } from "react"; // Import useEffect and useState
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +41,7 @@ export default function AdminDashboard() {
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const GITHUB_TOKEN = "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";
   const org = "sdscoeptest"; // Replace with your GitHub organization name
+  
  
   // Function to fetch GitHub data
   interface Commit {
@@ -69,10 +70,10 @@ export default function AdminDashboard() {
       Authorization: `token ${GITHUB_TOKEN}`,
     },});
     const repos = await response.json();
-    const ans = await fetch('https://api.github.com/repos/sdscoeptest/rustsearch/commits',{headers: {
-      Authorization: `token ${GITHUB_TOKEN}`,
-    },});
-    console.log(ans);
+    // const ans = await fetch('https://api.github.com/repos/sdscoeptest/rustsearch/commits',{headers: {
+    //   Authorization: `token ${GITHUB_TOKEN}`,
+    // },});
+    // console.log(ans);
 // Ensure repos is an array
 if (!Array.isArray(repos)) {
   console.error("Expected repos to be an array", repos);
@@ -138,6 +139,7 @@ if (!Array.isArray(repos)) {
       <AdminSidebar focus="dashboard"/>
 
       {/* Main Content */}
+      <Suspense fallback={<p>Loading feed...</p>}>
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <header className="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
@@ -337,6 +339,7 @@ if (!Array.isArray(repos)) {
           </div>
         </main>
       </div>
+    </Suspense>
     </div>
   );
 }
