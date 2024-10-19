@@ -191,6 +191,8 @@ export default function EnhancedUserDashboard() {
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const [compareList, setCompareList] = useState<CodeSnippet[]>([]);
+  const [documentationTexts, setDocumentationTexts] = useState<string[]>([]);
+
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -207,10 +209,66 @@ export default function EnhancedUserDashboard() {
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setLoading(true);
+    const getCodeSnippetsFileURLs = await fetch("http://127.0.0.1:5000/search-file", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query: input, k: 5 }),
+    });
+    const getCodeSnippetsFiles = await getCodeSnippetsFileURLs.json();
+
+    // getting code snippets for this files
+    const extensionToLanguage:any = {
+      "cpp":"cpp",
+      "py":"python",
+      "js":"javascript",
+      "ts":"typescript",
+      "java":"java",
+      "html":"html",
+      "css":"css",
+      "scss":"scss",
+      "sql":"sql",
+
+    }
+    const codeSnippets = await Promise.all(
+      getCodeSnippetsFiles.map(async (file: string, i:Number) => {
+        const response = await fetch("http://127.0.0.1:5000/highlight-code", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ "file_slug": file, "query": input }),
+        });
+        const data = await response.json();
+        const {start, end, content} = data;
+        return ({highlightedLines: new Array(end-start+1), code:content,compareList:false,language:extensionToLanguage[(file.split(".").get(-1))],description:"", index: i})
+      }));
+
+      const explainCodeSnippet = await fetch("http://127.0.0.1:5000/explain-code", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ "file_slug": input }),
+      })
+      const explainCodeSnippetData = await explainCodeSnippet.json();
+      console.log({explainCodeSnippetData});
+      
+      // making this compatible with assitant_messages
+      console.log({codeSnippets});
+      setDocumentationTexts(explainCodeSnippetData.explanation);
+
+
+      let assistantMessage: Message = {
+        type: "assistant",
+        content: `Here are some code snippets for ${input}`,
+        codeSnippets: codeSnippets
+      }
 
     // Simulating API call
     setTimeout(() => {
-      setMessages((prev) => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, codeSnippets]);
       setLoading(false);
     }, 2000);
   };
@@ -566,6 +624,10 @@ export default function EnhancedUserDashboard() {
                         Documentation for given function in{" "}
                         {selectedSnippet.language} would be displayed here.
                       </p>
+                      {/* display the documentation text of selected snippet  only one that is selcted*/}
+                      {
+                        documentationTexts[selectedSnippet.index]
+                      }
                     </TabsContent>
                   </Tabs>
                 </CardContent>

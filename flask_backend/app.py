@@ -116,7 +116,6 @@ def search_file():
     results = retrieve_files(query, vector_store, k)
     if len(results) == 0:
         return jsonify({"error": "No results found"})
-
     response = []
     for result in results:
         response.append(result["metadata"]["file_path"].replace("\\", "/")[13:])
@@ -133,7 +132,7 @@ def highlight_code():
     return jsonify({"content": content, "start": start, "end": end})
 
 
-@app.route("/expalin-code", methods=["POST"])
+@app.route("/explain-code", methods=["POST"])
 def explain_code():
     data = request.get_json()
     file_slug = data["file_slug"]
