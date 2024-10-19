@@ -25,11 +25,11 @@
     "add": "^2.0.6",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
-<<<<<<< Updated upstream
+
     "diff": "^7.0.0",
-=======
+
     "label": "^0.2.2",
->>>>>>> Stashed changes
+
     "lucide-react": "^0.453.0",
     "next": "14.2.15",
     "perfect-scrollbar": "^1.5.5",
