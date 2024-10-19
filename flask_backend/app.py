@@ -1,6 +1,7 @@
 import json
 from typing import final
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 import requests
 from utils.read_file import read_file
 from utils.search_files import retrieve_files
@@ -48,6 +49,12 @@ def create_repositories_dir():
 
 app = Flask(__name__)
 
+CORS(
+    app,
+    origins="http://localhost:3000",
+    allow_headers=["Content-Type", "Application/json"],
+)
+
 
 # Sample route for a health check
 @app.route("/")
@@ -75,7 +82,6 @@ def create_repo_embedding():
     download_repository(repo_url)
     print(f"Repository {repo_name} downloaded")
     files_content = read_files(f"repositories\\{repo_name}")
-
     descriptions = generate_descriptions(files_content, llm)
     print(descriptions)
     docs = generate_documents(descriptions)
@@ -88,8 +94,10 @@ def search_repository():
     data = request.get_json()
     query = data["query"]
     repo_name = "repositories"
-    search_query_in_repo(repo_name, query)
-    return jsonify({"message": "Search completed"})
+    response = {
+        "response":list(search_query_in_repo(repo_name, query))
+    }
+    return jsonify(response)
 
 
 @app.route("/update-file-embedding", methods=["POST"])

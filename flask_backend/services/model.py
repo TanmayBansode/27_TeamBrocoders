@@ -1,5 +1,7 @@
-from .get_uuid import generate_uuid
-from langchain_core.documents import Document
+
+from langchain_ollama.embeddings import OllamaEmbeddings
+from langchain_ollama import ChatOllama
+from langchain_ollama.embeddings import OllamaEmbeddings
 
 
 def update_file_embedding(file_path: str, llm, vector_store):
