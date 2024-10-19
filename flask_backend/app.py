@@ -88,8 +88,10 @@ def search_repository():
     data = request.get_json()
     query = data["query"]
     repo_name = "repositories"
-    search_query_in_repo(repo_name, query)
-    return jsonify({"message": "Search completed"})
+    response = {
+        "response":list(search_query_in_repo(repo_name, query))
+    }
+    return jsonify(response)
 
 
 @app.route("/update-file-embedding", methods=["POST"])
