@@ -71,16 +71,19 @@ def search_files(query, files_content):
         for line_number, line in enumerate(content_lines, start=1):
             for match in regex.finditer(line):
                 col_number = match.start() + 1
-                matches_in_file.append(
+                col_end = match.end()
+
+                matches_in_file.append (
                     {
                         "line_number": line_number,
                         "col_number": col_number,
+                        "col_end": col_end,
                         "match": match.group(),
                     }
                 )
 
         if matches_in_file:
-            results.append({"file_path": file_path, "matches": matches_in_file})
+            results.append({"file_path": file_path, "file_content": content_lines, "matches": matches_in_file})
 
     return results
 
@@ -89,7 +92,8 @@ def search_files(query, files_content):
 def print_results(results):
     for file_result in results:
         print(f"File: {file_result['file_path']}")
-        print(f"File Link: ./" + os.path.relpath(file_result["file_path"]))  # File link
+        # File link
+        print(f"File Link: ./" + os.path.relpath(file_result["file_path"]))
         print("Matches:")
         for match in file_result["matches"]:
             print(
@@ -106,11 +110,7 @@ def search_query_in_repo(directory, query):
     # Perform regex search
     results = search_files(query, files_content)
 
-    # Print results
-    if results:
-        print_results(results)
-    else:
-        print("No matches found.")
+    return results
 
 
 # Example usage:
