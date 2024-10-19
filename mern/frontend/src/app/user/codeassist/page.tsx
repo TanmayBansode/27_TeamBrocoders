@@ -10,7 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FaCodeCompare } from "react-icons/fa6";
 import Header from "@/components/Header";
 import { FaCode } from "react-icons/fa";
-import CodeComparison from "@/components/CodeComparison";
 
 import CodeHighlighter from "@/components/CodeHighlighter";
 import Editor, { DiffEditor, useMonaco, loader } from "@monaco-editor/react";
@@ -471,7 +470,7 @@ export default function EnhancedUserDashboard() {
                         title="Code"
                         language={selectedSnippet.language}
                         code={selectedSnippet.code}
-                        highlightedLines={selectedSnippet.highlightedLines}
+                        highlightedLines={selectedSnippet.highlightedLines? selectedSnippet.highlightedLines :  Array.from({ length: 10 }, (_, i) => i) }
                       />
                     </TabsContent>
                     <TabsContent value="documentation" className="p-4">
