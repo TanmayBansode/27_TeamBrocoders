@@ -9,7 +9,16 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FaCodeCompare } from "react-icons/fa6";
 import Header from "@/components/Header";
+import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { FaCode } from "react-icons/fa";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 import CodeHighlighter from "@/components/CodeHighlighter";
 import Editor, { DiffEditor, useMonaco, loader } from "@monaco-editor/react";
@@ -174,13 +183,14 @@ export default function EnhancedUserDashboard() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [compareWindow, setCompareWindow] = useState(false);
+  const [like, setLike] = useState(false);
+  const [dislike, setDislike] = useState(false);
   const [selectedSnippet, setSelectedSnippet] = useState<CodeSnippet | null>(
     null
   );
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const [compareList, setCompareList] = useState<CodeSnippet[]>([]);
-
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -211,11 +221,10 @@ export default function EnhancedUserDashboard() {
   };
 
   const addToCompare = (index: number, action: boolean) => {
-    
-    if(!assistantMessage.codeSnippets) return;
+    if (!assistantMessage.codeSnippets) return;
     const snippet = assistantMessage.codeSnippets[index];
-    
-    if(action){
+
+    if (action) {
       setCompareList([...compareList, snippet]);
       snippet.compareList = true;
     } else {
@@ -223,13 +232,21 @@ export default function EnhancedUserDashboard() {
       setCompareList(newCompareList);
       snippet.compareList = false;
     }
+  };
 
-    
-  }
-
-  const handleCompare = () => { 
+  const handleCompare = () => {
     setCompareWindow(true);
-  }
+  };
+
+  const onLike = () => {
+    setLike(true);
+    setDislike(false);
+  };
+
+  const onDislike = () => {
+    setDislike(true);
+    setLike(false);
+  };
 
   return (
     <div className={`flex h-screen`}>
@@ -265,7 +282,6 @@ export default function EnhancedUserDashboard() {
         <Header />
 
         {/* Chat Interface */}
-
 
         <div className="flex-1 overflow-hidden flex">
           <div
@@ -310,59 +326,111 @@ export default function EnhancedUserDashboard() {
                   <CardContent className="p-3">
                     <p className="mb-2">{message.content}</p>
                     {message.codeSnippets && (
-                      <div className="mt-4 space-y-4">
-                        {message.codeSnippets.map((snippet, snippetIndex) => (
-                          <Card key={snippetIndex} className="bg-muted">
-                            <CardHeader className="p-3 d-flex justify-content-between">
-                              <div className="col-lg-4">
-                                <p>Code Version {snippetIndex + 1}</p>
-                              </div>
-                              <div className="col-lg-1">
-                                <Button
-                                  variant="secondary"
-                                  size="sm"
-                                  onClick={() => setSelectedSnippet(snippet)}
-                                  className="bg-border"
-                                >
-                                  <FaCode />
-                                </Button>
-
-                                <Button
-                                  variant="secondary"
-                                  size="sm"
-                                  onClick={() => setSelectedSnippet(snippet)}
-                                  className="bg-border mx-2"
-                                >
-                                  <FaGithub />
-                                </Button>
-                                
-                                {snippet.compareList? (
+                      <>
+                        <div className="mt-4 space-y-4">
+                          {message.codeSnippets.map((snippet, snippetIndex) => (
+                            <Card key={snippetIndex} className="bg-muted">
+                              <CardHeader className="p-3 d-flex justify-content-between">
+                                <div className="col-lg-4">
+                                  <p>Code Version {snippetIndex + 1}</p>
+                                </div>
+                                <div className="col-lg-1">
                                   <Button
-                                  variant="secondary"
-                                  size="sm"
-                                  onClick={() => addToCompare(snippetIndex, false)}
-                                  className="bg-border"
-                                >
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => setSelectedSnippet(snippet)}
+                                    className="bg-border"
+                                  >
+                                    <FaCode />
+                                  </Button>
 
-<FaCodeCompare />
-                                </Button> 
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => setSelectedSnippet(snippet)}
+                                    className="bg-border mx-2"
+                                  >
+                                    <FaGithub />
+                                  </Button>
 
-                                  
-                                 ) : ( <Button
-                                  variant="secondary"
-                                  size="sm"
-                                  onClick={() => addToCompare(snippetIndex, true)}
-                                  className="bg-border"
-                                >
-                                  <MdOutlineAdd />
-                                </Button>) }
-                                
-                                
-                              </div>
-                            </CardHeader>
-                          </Card>
-                        ))}
-                      </div>
+                                  {snippet.compareList ? (
+                                    <Button
+                                      variant="secondary"
+                                      size="sm"
+                                      onClick={() =>
+                                        addToCompare(snippetIndex, false)
+                                      }
+                                      className="bg-border"
+                                    >
+                                      <FaCodeCompare />
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      variant="secondary"
+                                      size="sm"
+                                      onClick={() =>
+                                        addToCompare(snippetIndex, true)
+                                      }
+                                      className="bg-border"
+                                    >
+                                      <MdOutlineAdd />
+                                    </Button>
+                                  )}
+                                </div>
+                              </CardHeader>
+                            </Card>
+                          ))}
+                        </div>
+
+                        <div className="relative bottom-0 left-0 mt-4 flex space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onLike}
+                            aria-label="Like"
+                            className={
+                              like
+                                ? "bg-green-100"
+                                : "text-green-500 hover:text-green-600 hover:bg-green-100"
+                            }
+                          >
+                            <ThumbsUp className="h-4 w-4 mr-1" />
+                            Like
+                          </Button>
+
+                          <Dialog>
+                            <DialogTrigger>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={onDislike}
+                                aria-label="Dislike"
+                                className={
+                                  dislike
+                                    ? "bg-red-100"
+                                    : "text-red-500 hover:text-red-600 hover:bg-red-100"
+                                }
+                              >
+                                <ThumbsDown className="h-4 w-4 mr-1" />
+                                Dislike
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent >
+                              <DialogHeader>
+                                <DialogTitle>
+                                  Reason 
+                                </DialogTitle>
+                                <DialogDescription>
+                                <Input className="mt-4" type="textarea" placeholder="Response is not adhering to coding standards" />
+                                <Button className="mt-4" variant="outline" size="sm">
+                                  Submit
+                                </Button>
+                                </DialogDescription>
+                              </DialogHeader>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+                      </>
                     )}
                   </CardContent>
                 </Card>
@@ -389,58 +457,74 @@ export default function EnhancedUserDashboard() {
             )}
           </div>
 
-          {!compareWindow? null : 
-                      <div className="w-1/2 border-l border-gray-200 dark:border-gray-700 p-6 overflow-y-auto bg-white dark:bg-gray-800">
-                      <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                          Code Comparison
-                        </h3>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setCompareWindow(false)}
-                          aria-label="Close comparison window"
-                        >
-                          <X className="h-5 w-5" />
-                        </Button>
-                      </div>
-                    
-                      <div className="space-y-6">
-                        <Card>
-                          <CardHeader>
-                            <CardTitle className="text-xl font-semibold text-gray-900 dark:text-gray-100">Differences Summary</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            
-                            <p className="text-sm text-gray-600 dark:text-gray-300">
-                              The main differences are in the function implementations and variable naming conventions.
-                            </p>
-                          </CardContent>
-                        </Card>
-                    
-                    
-                        <Card>
-                          <CardHeader>
-                            <CardTitle className="text-xl font-semibold text-gray-900 dark:text-gray-100">Recommended Action</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                              Based on the analysis, we recommend using Code 2 as it provides better performance and follows the project's coding standards more closely.
-                            </p>
-                            <div className="flex space-x-4">
-                              <Button variant="default"   onClick={() => {setSelectedSnippet(compareList[1]); setCompareWindow(false)}}>
-                                Use Code 2
-                              </Button>
-                              <Button variant="outline"   onClick={() => {setSelectedSnippet(compareList[0]); setCompareWindow(false)}}>
-                                Keep Code 1
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </div>
-                    </div>
+          {!compareWindow ? null : (
+            <div className="w-1/2 border-l border-gray-200 dark:border-gray-700 p-6 overflow-y-auto bg-white dark:bg-gray-800">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  Code Comparison
+                </h3>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCompareWindow(false)}
+                  aria-label="Close comparison window"
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
 
-          }
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                      Differences Summary
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      The main differences are in the function implementations
+                      and variable naming conventions.
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                      Recommended Action
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+                      Based on the analysis, we recommend using Code 2 as it
+                      provides better performance and follows the project's
+                      coding standards more closely.
+                    </p>
+                    <div className="flex space-x-4">
+                      <Button
+                        variant="default"
+                        onClick={() => {
+                          setSelectedSnippet(compareList[1]);
+                          setCompareWindow(false);
+                        }}
+                      >
+                        Use Code 2
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedSnippet(compareList[0]);
+                          setCompareWindow(false);
+                        }}
+                      >
+                        Keep Code 1
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
 
           {selectedSnippet && (
             <div className="w-1/2 border-l border-gray-200 dark:border-gray-700 p-4 overflow-y-auto bg-white dark:bg-gray-800">
@@ -470,7 +554,11 @@ export default function EnhancedUserDashboard() {
                         title="Code"
                         language={selectedSnippet.language}
                         code={selectedSnippet.code}
-                        highlightedLines={selectedSnippet.highlightedLines? selectedSnippet.highlightedLines :  Array.from({ length: 10 }, (_, i) => i) }
+                        highlightedLines={
+                          selectedSnippet.highlightedLines
+                            ? selectedSnippet.highlightedLines
+                            : Array.from({ length: 10 }, (_, i) => i)
+                        }
                       />
                     </TabsContent>
                     <TabsContent value="documentation" className="p-4">
@@ -486,26 +574,22 @@ export default function EnhancedUserDashboard() {
           )}
         </div>
 
-        {compareList.length > 1? (
-           <CardContent>
-           <div className="grid grid-cols-4 gap-2">
-               <Button
-                 
-                 variant="outline"
-                 className="justify-start"
-                 onClick={() => handleCompare()}
-               >
-                 Compare Selected Codes
-               </Button>
-           
-           </div>
-         </CardContent>
+        {compareList.length > 1 ? (
+          <CardContent>
+            <div className="grid grid-cols-4 gap-2">
+              <Button
+                variant="outline"
+                className="justify-start"
+                onClick={() => handleCompare()}
+              >
+                Compare Selected Codes
+              </Button>
+            </div>
+          </CardContent>
         ) : null}
 
-       
         {/* Input Area */}
         <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-    
           <form onSubmit={handleSubmit} className="flex space-x-2">
             <div className="flex-1 relative">
               <Input
