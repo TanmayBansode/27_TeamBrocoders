@@ -2,6 +2,7 @@ def generate_descriptions(files_content, llm):
   descriptions = {}
   total = len(files_content)
   for index, (filename, content) in enumerate(files_content.items()):
+      print(f"Generating description for {filename} ({index+1}/{total})", end="\r")
       file = """"""
       for line in content:
         file += line + "\n"

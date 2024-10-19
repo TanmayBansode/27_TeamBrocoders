@@ -7,7 +7,7 @@ const AdminSidebar = ({ focus }: { focus: string }) => {
   return (
     <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
       <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
-        <span className="text-2xl font-bold text-primary">CodeAssist</span>
+        <span className="text-2xl font-bold text-primary">CodeScout</span>
       </div>
       <nav className="mt-6 space-y-1">
         <Link
