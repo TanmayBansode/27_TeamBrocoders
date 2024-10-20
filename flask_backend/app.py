@@ -158,6 +158,7 @@ def get_diff():
 
 @app.get("/repositories")
 def list_repositories():
+    # dummy access token
     GITHUB_TOKEN = "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"
     ORG_NAME = "satvikg7"
     url = f"https://api.github.com/users/{ORG_NAME}/repos?per_page=50"
