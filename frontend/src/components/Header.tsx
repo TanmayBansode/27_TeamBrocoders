@@ -8,7 +8,6 @@ import {
     TooltipProvider,
     TooltipTrigger,
   } from "@/components/ui/tooltip";
-  import Sidebar from "@/components/Sidebar";
   import {
     DropdownMenu,
     DropdownMenuContent,
@@ -23,7 +22,7 @@ const Header = () => {
     <header className="flex items-center justify-between px-6 py-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
     <div className="flex items-center">
       <span className="text-2xl font-semibold text-gray-800 dark:text-white">
-        Code Assistant
+        Dashboard
       </span>
     </div>
     <div className="flex items-center space-x-4">

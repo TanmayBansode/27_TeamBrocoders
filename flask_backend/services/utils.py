@@ -28,6 +28,7 @@ allowed_extensions = [
     ".css",
     ".php",
     ".sql",
+    ".ino",
     # ".json",
     # ".xml",
     # ".yml",
@@ -48,7 +49,6 @@ def read_files(directory) -> dict:
             _, file_extension = os.path.splitext(file_path)
             if file_extension not in allowed_extensions:
                 continue
-
             try:
                 with open(file_path, "r", encoding="utf-8") as f:
                     files_content[file_path] = f.read().splitlines()
@@ -73,7 +73,7 @@ def search_files(query, files_content):
                 col_number = match.start() + 1
                 col_end = match.end()
 
-                matches_in_file.append (
+                matches_in_file.append(
                     {
                         "line_number": line_number,
                         "col_number": col_number,
@@ -83,7 +83,13 @@ def search_files(query, files_content):
                 )
 
         if matches_in_file:
-            results.append({"file_path": file_path, "file_content": content_lines, "matches": matches_in_file})
+            results.append(
+                {
+                    "file_path": file_path,
+                    "file_content": content_lines,
+                    "matches": matches_in_file,
+                }
+            )
 
     return results
 

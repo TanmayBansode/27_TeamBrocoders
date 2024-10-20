@@ -19,30 +19,15 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-    Badge,
-    GitBranch,
-    GitCommit,
-    GitFork,
-    Github,
-    Search,
-    Star,
-} from "lucide-react";
+import { Badge, GitBranch, GitFork, Github, Search, Star } from "lucide-react";
 import Link from "next/link";
 import AdminSidebar from "@/components/AdminSidebar";
-import {
-    TooltipProvider,
-    TooltipTrigger,
-    TooltipContent,
-} from "@radix-ui/react-tooltip";
-import { Tooltip } from "recharts";
+
 import { Checkbox } from "@/components/ui/checkbox"; // Replace with your library path
 
 export default function AdminRepo() {
-    const [isHovered, setIsHovered] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [repositories, setRepositories] = useState<Repository[]>([]);
-    const [loading, setLoading] = useState(true);
     const [selectedRepos, setSelectedRepos] = useState<Set<number>>(new Set()); // State for selected repositories
     const [logs, setLogs] = useState<string[]>([]);
     const [termview, setConsole] = useState(false);
@@ -64,26 +49,10 @@ export default function AdminRepo() {
         status: string;
     }
 
-    // type RepoCardProps = {
-    //   repo: Repo
-    //   isSelected: boolean
-    //   onSelectRepo: (id: number) => void
-    // }
-
     const statusColors = {
         active: "bg-green-500",
         inactive: "bg-yellow-500",
         archived: "bg-gray-500",
-    };
-
-    const LoadingDots = () => {
-        return (
-            <div className="loading-dots">
-                <span>.</span>
-                <span>.</span>
-                <span>.</span>
-            </div>
-        );
     };
 
     const handleGenerateEmbeddings = async () => {
@@ -116,19 +85,25 @@ export default function AdminRepo() {
             ]);
         }, 3000);
 
-        // make API call to generate embeddings at /create-repo-embedding for each repo in repos_to_embed
-        // use Promise.all to wait for all API calls to finish
-        const p = repos_to_embed.map((repo) => {
-            return fetch("http://localhost:5000/create-repo-embedding", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ repo_url: repo.html_url }),
-            });
+        fetch("http://localhost:5000/create-embeddings", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                repo_urls: repos_to_embed.map((repo) => repo.html_url),
+            }),
+        }).then((res) => {
+            if (res.ok) {
+                setLogs((prevLogs) => [...prevLogs, "Embeddings generated!"]);
+            } else {
+                setLogs((prevLogs) => [
+                    ...prevLogs,
+                    "Error generating embeddings.",
+                ]);
+            }
+            setIsGenerating(false);
         });
-
-        const repos = await Promise.all(p);
 
         setLogs((prevLogs) => [
             ...prevLogs,
@@ -142,6 +117,15 @@ export default function AdminRepo() {
             const repos = await fetch(
                 "http://localhost:5000/repositories"
             ).then((res) => res.json());
+
+            // sort by stars + forks
+            repos.sort((a, b) => {
+                const aScore = a.stargazers_count + a.forks_count;
+                const bScore = b.stargazers_count + b.forks_count;
+                return bScore - aScore;
+            });
+            console.log(repos);
+
             setRepositories(repos);
         };
         getRepositories();
@@ -162,10 +146,6 @@ export default function AdminRepo() {
     };
 
     const handleDeleteSelected = () => {
-        // Logic to delete selected repositories
-        // const reposToDelete = Array.from(selectedRepos);
-        // Perform deletion logic (e.g., API call to delete repos)
-        // Reset selection after deletion
         setSelectedRepos(new Set());
     };
 
@@ -311,24 +291,16 @@ export default function AdminRepo() {
                                 >
                                     Delete Embeddings
                                 </Button>
-
-                                <Button
-                                    onClick={handleDeleteSelected}
-                                    disabled={selectedRepos.size === 0}
-                                    variant="destructive"
-                                >
-                                    Delete Selected
-                                </Button>
                             </div>
                         </div>
 
                         {/* Recent Repositories */}
                         <div className="mb-8">
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            <div className="flex flex-wrap gap-4 justify-evenly">
                                 {filteredRepositories.length > 0 ? (
                                     filteredRepositories.map((repo) => (
                                         <Card
-                                            className="relative flex justify-between flex-col"
+                                            className="relative flex justify-between flex-col w-80 h-56"
                                             // onMouseEnter={() => setIsHovered(true)}
                                             // onMouseLeave={() => setIsHovered(false)}
                                             key={repo.id}
@@ -341,36 +313,34 @@ export default function AdminRepo() {
                                                             <h3 className="font-bold text-lg">
                                                                 {repo.name}
                                                             </h3>
-                                                            <Badge
-                                                                variant="outline"
-                                                                className={`${
-                                                                    statusColors[
-                                                                        repo
-                                                                            .status
-                                                                    ]
-                                                                } text-white`}
-                                                            >
-                                                                {repo.status}
-                                                            </Badge>
                                                         </div>
-                                                        <Checkbox
-                                                            checked={selectedRepos.has(
-                                                                repo.id
-                                                            )}
-                                                            onCheckedChange={() =>
-                                                                handleSelectRepo(
+                                                        {!repo.downloaded && (
+                                                            <Checkbox
+                                                                checked={selectedRepos.has(
                                                                     repo.id
-                                                                )
-                                                            }
-                                                            aria-label={`Select ${repo.name} repository`}
-                                                        />
+                                                                )}
+                                                                onCheckedChange={() =>
+                                                                    handleSelectRepo(
+                                                                        repo.id
+                                                                    )
+                                                                }
+                                                                aria-label={`Select ${repo.name} repository`}
+                                                            />
+                                                        )}
                                                     </div>
                                                 </CardHeader>
                                                 <CardContent>
                                                     <p className="text-sm text-muted-foreground mb-2">
-                                                        {repo.description}
+                                                        {String(
+                                                            repo.description
+                                                        ).length > 75
+                                                            ? repo.description.substring(
+                                                                  0,
+                                                                  75
+                                                              ) + "..."
+                                                            : repo.description}
                                                     </p>
-                                                    <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-4">
+                                                    <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-2">
                                                         <span className="flex items-center">
                                                             <Star className="h-4 w-4 mr-1" />
                                                             {
@@ -391,7 +361,7 @@ export default function AdminRepo() {
                                                     </div>
                                                 </CardContent>
                                             </div>
-                                            <CardFooter className="pt-2 justify-between">
+                                            <CardFooter className="justify-between">
                                                 <Button
                                                     variant="outline"
                                                     size="sm"

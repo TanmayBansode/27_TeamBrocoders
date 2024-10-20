@@ -2,6 +2,8 @@
 from langchain_ollama.embeddings import OllamaEmbeddings
 from langchain_ollama import ChatOllama
 from langchain_ollama.embeddings import OllamaEmbeddings
+from langchain_core.documents import Document
+from services.get_uuid import generate_uuid
 
 
 def update_file_embedding(file_path: str, llm, vector_store):
@@ -31,4 +33,4 @@ def update_file_embedding(file_path: str, llm, vector_store):
         page_content=description, metadata={"file_path": file_path}, id=file_path
     )
     print(doc)
-    vector_store.update_document(file_path, doc)
+    vector_store.update_document(generate_uuid(file_path), doc)

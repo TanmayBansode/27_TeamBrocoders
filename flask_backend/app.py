@@ -68,35 +68,39 @@ def download_repository(repo_url):
     return jsonify({"message": "Repository downloaded"})
 
 
-@app.route("/create-repo-embedding", methods=["POST"])
+@app.route("/create-embeddings", methods=["POST"])
 def create_repo_embedding():
     data = request.get_json()
-    repo_url = data["repo_url"]
-    repo_name = repo_url.split("/")[-1]
+    repo_urls = data["repo_urls"]
+    print(repo_urls)
+    total = len(repo_urls)
+    for index, repo_url in enumerate(repo_urls):
+        print(f"({index+1}/{total})", end="\r")
+        repo_name = repo_url.split("/")[-1].split(".")[0]
+        print(repo_name)
+        if os.path.exists(f"repositories/{repo_name}"):
+            os.system(f"rm -rf repositories/{repo_name}")
+            print(f"Repository {repo_name} already exists, deleting it...")
 
-    # check if the repository exists, if exists delete it, then download it
-    if os.path.exists(f"repositories/{repo_name}"):
-        os.system(f"rm -rf repositories/{repo_name}")
-        print(f"Repository {repo_name} already exists, deleting it...")
-
-    download_repository(repo_url)
-    print(f"Repository {repo_name} downloaded")
-    files_content = read_files(f"repositories\\{repo_name}")
-    descriptions = generate_descriptions(files_content, llm)
-    print(descriptions)
-    docs = generate_documents(descriptions)
-    vector_store.add_documents(documents=docs)
+        download_repository(repo_url)
+        files_content = read_files(f"repositories\\{repo_name}")
+        descriptions = generate_descriptions(files_content, llm)
+        docs = generate_documents(descriptions)
+        if len(docs) == 0:
+            print(f"No documents generated for {repo_name}")
+            continue
+        uuids = [doc.id for doc in docs]
+        vector_store.add_documents(documents=docs, ids=uuids)
+        index += 1
     return jsonify({"message": "Repository embedding created"})
 
 
-@app.route("/search-repository", methods=["POST"])
+@app.route("/search-regex", methods=["POST"])
 def search_repository():
     data = request.get_json()
     query = data["query"]
     repo_name = "repositories"
-    response = {
-        "response":list(search_query_in_repo(repo_name, query))
-    }
+    response = {"response": list(search_query_in_repo(repo_name, query))}
     return jsonify(response)
 
 
@@ -118,8 +122,6 @@ def search_file():
         return jsonify({"error": "No results found"})
     response = []
     for result in results:
-        print("#######################")
-        print(result)
         response.append(result.metadata["file_path"].replace("\\", "/")[13:])
 
     return jsonify({"results": response})
@@ -156,17 +158,15 @@ def get_diff():
 
 @app.get("/repositories")
 def list_repositories():
-    GITHUB_TOKEN = "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"
-    ORG_NAME = "sdscoeptest"
-    url = f"https://api.github.com/orgs/{ORG_NAME}/repos"
-
+    GITHUB_TOKEN = "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"
+    ORG_NAME = "satvikg7"
+    url = f"https://api.github.com/users/{ORG_NAME}/repos?per_page=50"
     headers = {
         "Authorization": f"token {GITHUB_TOKEN}",
         "Accept": "application/vnd.github.v3+json",
     }
 
     response = requests.get(url, headers=headers)
-
     if response.status_code != 200:
         return {
             "error": f"Failed to fetch repositories. Status code: {response.status_code}"

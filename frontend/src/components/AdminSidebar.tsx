@@ -1,4 +1,3 @@
-// components/Sidebar.tsx
 import React from "react";
 import Link from "next/link";
 import { LayoutDashboard, Code, GitBranch, Activity, Settings } from "lucide-react";
@@ -22,7 +21,7 @@ const AdminSidebar = ({ focus }: { focus: string }) => {
           Dashboard
         </Link>
         <Link
-          href="/admin/repository"
+          href="/admin/repositories"
           className={`flex items-center px-4 py-2 text-sm font-medium ${
             focus === "repository"
               ? "text-white bg-primary"

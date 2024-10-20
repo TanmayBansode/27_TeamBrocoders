@@ -64,27 +64,18 @@ export default function AdminDashboard() {
         commits: Commit[]; // Array of commits related to the repository
     }
 
-    const statusColors = {
-        active: "bg-green-500",
-        inactive: "bg-yellow-500",
-        archived: "bg-gray-500",
-    };
-
     // useEffect to fetch data on component mount
     useEffect(() => {
         const getRepositories = async () => {
             const repos = await fetch(
                 "http://localhost:5000/repositories"
             ).then((res) => res.json());
-            setRepositories(repos.slice(0, 4));
+            setRepositories(repos);
             console.log(repos);
         };
         getRepositories();
     }, []);
 
-    const filteredRepositories = repositories.filter((repo) =>
-        repo.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
 
     return (
         <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
@@ -168,26 +159,13 @@ export default function AdminDashboard() {
                     {/* Content */}
                     <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 dark:bg-gray-900">
                         <div className="container mx-auto px-6 py-8">
-                            {/* Search Bar */}
-                            <div className="relative mb-8">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                                <Input
-                                    type="text"
-                                    className="pl-10 pr-4 py-2 w-full rounded-full border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent"
-                                    placeholder="Search repositories, users, or documentation..."
-                                    value={searchTerm}
-                                    onChange={(e) =>
-                                        setSearchTerm(e.target.value)
-                                    }
-                                />
-                            </div>
 
                             {/* Summary Cards */}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                                 <Card>
                                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                         <CardTitle className="text-sm font-medium">
-                                            Total Repositories
+                                            {repositories.length} Repositories
                                         </CardTitle>
                                         <GitBranch className="h-4 w-4 text-muted-foreground" />
                                     </CardHeader>
@@ -250,108 +228,6 @@ export default function AdminDashboard() {
                                 </Card>
                             </div>
 
-                            {/* Recent Repositories */}
-                            <div className="mb-8">
-                                <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">
-                                    Recent Repositories
-                                </h2>
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                    {filteredRepositories.length > 0 ? (
-                                        filteredRepositories.map((repo) => (
-                                            <Card
-                                                className="relative flex justify-between flex-col"
-                                            key={repo.id}
-
-                                            >
-                                                <div>
-                                                    <CardHeader className="pb-2">
-                                                        <div className="flex items-center justify-between">
-                                                            <div className="flex items-center space-x-2">
-                                                                <Github className="h-5 w-5" />
-                                                                <h3 className="font-bold text-lg">
-                                                                    {repo.name}
-                                                                </h3>
-                                                                <Badge
-                                                                    variant="outline"
-                                                                    className={`${
-                                                                        statusColors[
-                                                                            repo
-                                                                                .status
-                                                                        ]
-                                                                    } text-white`}
-                                                                >
-                                                                    {
-                                                                        repo.status
-                                                                    }
-                                                                </Badge>
-                                                            </div>
-                                                            <Checkbox
-                                                                checked={selectedRepos.has(
-                                                                    repo.id
-                                                                )}
-                                                                onCheckedChange={() =>
-                                                                    handleSelectRepo(
-                                                                        repo.id
-                                                                    )
-                                                                }
-                                                                aria-label={`Select ${repo.name} repository`}
-                                                            />
-                                                        </div>
-                                                    </CardHeader>
-                                                    <CardContent>
-                                                        <p className="text-sm text-muted-foreground mb-2">
-                                                            {repo.description}
-                                                        </p>
-                                                        <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-4">
-                                                            <span className="flex items-center">
-                                                                <Star className="h-4 w-4 mr-1" />
-                                                                {
-                                                                    repo.stargazers_count
-                                                                }
-                                                            </span>
-                                                            <span className="flex items-center">
-                                                                <GitFork className="h-4 w-4 mr-1" />
-                                                                {
-                                                                    repo.forks_count
-                                                                }
-                                                            </span>
-                                                            <span className="flex items-center">
-                                                                <GitBranch className="h-4 w-4 mr-1" />
-                                                                {
-                                                                    repo.open_issues_count
-                                                                }{" "}
-                                                                issues
-                                                            </span>
-                                                        </div>
-                                                    </CardContent>
-                                                </div>
-
-                                                <CardFooter className="pt-2">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        asChild
-                                                    >
-                                                        <Link
-                                                            href={repo.html_url}
-                                                            target="_blank"
-                                                        >
-                                                            View on GitHub
-                                                        </Link>
-                                                    </Button>
-                                                </CardFooter>
-                                            </Card>
-                                        ))
-                                    ) : (
-                                        <p className="text-muted-foreground">
-                                            No repositories found for this
-                                            organization.
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Activity Feed */}
                             <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">
                                 Recent Activity
                             </h2>

@@ -7,6 +7,7 @@ def retrieve_files(query, vector_store, k=1):
         search_type="similarity", search_kwargs={"k": k}
     )
     results = retriever.invoke(query)
+    print(results)
     llm = ChatOllama(model="llama3.2", temperature=0)
     retrieval_prompt = PromptTemplate(
         template="""<|begin_of_text|><|start_header_id|>system<|end_header_id|> You are a code grader assessing relevance 

@@ -8,7 +8,6 @@ import { Eye, EyeOff, Copy, Check } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
